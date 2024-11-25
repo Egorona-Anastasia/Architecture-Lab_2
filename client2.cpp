@@ -1,8 +1,6 @@
 #include <iostream>
 #include <string>
 #include <cstring>
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include <unistd.h>
 #include <arpa/inet.h>  // for inet_pton
 #include <sys/socket.h> // for sockets
@@ -13,7 +11,6 @@
 int main() {
     int sock = 0;
     struct sockaddr_in serv_addr;
-    const char *hello = "ping";
     char buffer[1024] = {0};
 
     // Create socket
@@ -37,20 +34,56 @@ int main() {
         return -1;
     }
 
-    while (true) {
-        // Send message to the server
-        send(sock, hello, strlen(hello), 0);
-        std::cout << "Отправлено серверу: " << hello << std::endl;
+    int mode;
+    std::cout << "Выберите режим работы:\n1. Автоматический\n2. Ручной\nВведите 1 или 2: ";
+    std::cin >> mode;
 
-        // Read response from the server
-        int valread = read(sock, buffer, 1024);
-        if (valread > 0) {
-            std::cout << "Получено от сервера: " << buffer << std::endl;
+    if (mode == 1) {
+        const char *hello = "ping";
+
+        while (true) {
+            // Send message to the server
+            send(sock, hello, strlen(hello), 0);
+            std::cout << "Отправлено серверу: " << hello << std::endl;
+
+            // Read response from the server
+            int valread = read(sock, buffer, 1024);
+            if (valread > 0) {
+                std::cout << "Получено от сервера: " << buffer << std::endl;
+            }
+
+            // Clear the buffer
+            memset(buffer, 0, sizeof(buffer));
+            sleep(1); // Delay between sends
         }
+    } else if (mode == 2) {
+        std::string userInput;
 
-        // Clear the buffer
-        memset(buffer, 0, sizeof(buffer));
-        sleep(1); // Delay between sends
+        while (true) {
+            std::cout << "Введите команду (ping для отправки, exit для выхода): ";
+            std::getline(std::cin >> std::ws, userInput); // Чтение строки с пробелами
+
+            if (userInput == "exit") {
+                break; // Выход из цикла
+            } else if (userInput == "ping") {
+                // Send message to the server
+                send(sock, userInput.c_str(), userInput.length(), 0);
+                std::cout << "Отправлено серверу: " << userInput << std::endl;
+
+                // Read response from the server
+                int valread = read(sock, buffer, 1024);
+                if (valread > 0) {
+                    std::cout << "Получено от сервера: " << buffer << std::endl;
+                }
+            } else {
+                std::cout << "Некорректная команда. Пожалуйста, введите 'ping' или 'exit'." << std::endl;
+            }
+
+            // Clear the buffer
+            memset(buffer, 0, sizeof(buffer));
+        }
+    } else {
+        std::cout << "Некорректный режим. Программа завершена." << std::endl;
     }
 
     close(sock);
