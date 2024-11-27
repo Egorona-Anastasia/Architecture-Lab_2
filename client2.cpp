@@ -15,7 +15,7 @@ int main() {
 
     // Create socket
     if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-        std::cerr << "Ошибка создания сокета" << std::endl;
+        std::cerr << "Socket creation error" << std::endl;
         return -1;
     }
 
@@ -24,18 +24,18 @@ int main() {
 
     // Convert IPv4 and IPv6 addresses from text to binary form
     if (inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr) <= 0) {
-        std::cerr << "Неверный адрес/адрес не поддерживается" << std::endl;
+        std::cerr << "Invalid address/address is not supported" << std::endl;
         return -1;
     }
 
     // Connect to the server
     if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
-        std::cerr << "Ошибка подключения к серверу" << std::endl;
+        std::cerr << "Server connection error" << std::endl;
         return -1;
     }
 
     int mode;
-    std::cout << "Выберите режим работы:\n1. Автоматический\n2. Ручной\nВведите 1 или 2: ";
+    std::cout << "Choose mode:\n1. Auto\n2. Manual\nEnter 1 or 2: ";
     std::cin >> mode;
 
     if (mode == 1) {
@@ -44,12 +44,16 @@ int main() {
         while (true) {
             // Send message to the server
             send(sock, hello, strlen(hello), 0);
-            std::cout << "Отправлено серверу: " << hello << std::endl;
+            std::cout << "Sent to the server: " << hello << std::endl;
 
             // Read response from the server
             int valread = read(sock, buffer, 1024);
             if (valread > 0) {
-                std::cout << "Получено от сервера: " << buffer << std::endl;
+                std::cout << "Received from the server: " << buffer << std::endl;
+            }
+            else{
+                std::cerr << "Error. Server is closed." << std::endl;
+                break;
             }
 
             // Clear the buffer
@@ -60,7 +64,7 @@ int main() {
         std::string userInput;
 
         while (true) {
-            std::cout << "Введите команду (ping для отправки, exit для выхода): ";
+            std::cout << "Enter the command ('ping' to send, 'exit' to stop): ";
             std::getline(std::cin >> std::ws, userInput); // Чтение строки с пробелами
 
             if (userInput == "exit") {
@@ -68,22 +72,28 @@ int main() {
             } else if (userInput == "ping") {
                 // Send message to the server
                 send(sock, userInput.c_str(), userInput.length(), 0);
-                std::cout << "Отправлено серверу: " << userInput << std::endl;
+                int valread = read(sock, buffer, 1024);
+                if (valread <= 0){
+                    std::cerr << "Error. Server is closed." << std::endl;
+                    break;
+                }
+
+                std::cout << "Sent to the server: " << userInput << std::endl;
 
                 // Read response from the server
-                int valread = read(sock, buffer, 1024);
                 if (valread > 0) {
-                    std::cout << "Получено от сервера: " << buffer << std::endl;
+                    std::cout << "Received from the server: " << buffer << std::endl;
                 }
+
             } else {
-                std::cout << "Некорректная команда. Пожалуйста, введите 'ping' или 'exit'." << std::endl;
+                std::cout << "Invalid command. Please, enter 'ping' or 'exit'." << std::endl;
             }
 
             // Clear the buffer
             memset(buffer, 0, sizeof(buffer));
         }
     } else {
-        std::cout << "Некорректный режим. Программа завершена." << std::endl;
+        std::cout << "Invalid mode. Program has finished." << std::endl;
     }
 
     close(sock);

@@ -16,13 +16,13 @@ int main() {
 
     // Create socket
     if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
-        std::cerr << "Ошибка создания сокета" << std::endl;
+        std::cerr << "Socket creation error" << std::endl;
         return -1;
     }
 
     // Bind socket to port
     if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt))) {
-        std::cerr << "Ошибка установки параметров сокета" << std::endl;
+        std::cerr << "Error setting socket parameters" << std::endl;
         return -1;
     }
     address.sin_family = AF_INET;// IPv4
@@ -30,21 +30,21 @@ int main() {
     address.sin_port = htons(PORT); // Convert port number to network byte order
 
     if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
-        std::cerr << "Ошибка привязки сокета" << std::endl;
+        std::cerr << "Socket binding error" << std::endl;
         return -1;
     }
 
     // Listen for incoming connections
     if (listen(server_fd, 3) < 0) {
-        std::cerr << "Ошибка прослушивания" << std::endl;
+        std::cerr << "Listening error" << std::endl;
         return -1;
     }
 
-    std::cout << "Сервер запущен на порту " << PORT << std::endl;
+    std::cout << "Server is listening on port " << PORT << std::endl;
 
     // Accept incoming connection    
     if ((new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen)) < 0) {
-        std::cerr << "Ошибка принятия подключения" << std::endl;
+        std::cerr << "Error accepting connection" << std::endl;
         return -1;
     }
 
@@ -54,13 +54,13 @@ int main() {
         if (valread <= 0) {
             break; // Exit loop if no data is read
         }
-        std::cout << "Получено от клиента: " << buffer << std::endl;
+        std::cout << "Received from the client: " << buffer << std::endl;
 
         // Respond to client
         if (strcmp(buffer, "ping") == 0) {
             const char *response = "pong";
             send(new_socket, response, strlen(response), 0);
-            std::cout << "Отправлено клиенту: " << response << std::endl;
+            std::cout << "Sent to the client: " << response << std::endl;
         }
 
         // Clear the buffer
